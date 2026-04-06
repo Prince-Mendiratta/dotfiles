@@ -177,9 +177,10 @@ alias yd="yarn start:dev"
 # ============================================================================
 # PATH & ENVIRONMENT
 # ============================================================================
-export PATH="$PATH:/Applications/Docker.app/Contents/Resources/bin/"
+export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.opencode/bin:$PATH"
 export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
+export PATH="$PATH:/Applications/Docker.app/Contents/Resources/bin/"
 
 # Google Cloud SDK
 if [ -f "$HOME/Downloads/google-cloud-sdk/path.zsh.inc" ]; then
