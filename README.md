@@ -10,7 +10,7 @@ Minimal shell configuration for macOS. Manages:
 ### 1. Clone the repo
 
 ```zsh
-git clone <your-repo-url> ~/dotfiles
+git clone git@github.com:Prince-Mendiratta/dotfiles.git ~/dotfiles
 ```
 
 ### 2. Run the install script
