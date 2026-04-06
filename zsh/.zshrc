@@ -1,3 +1,6 @@
+# Uncomment to monitor zsh performance. uncomment bottomost also to see the results.
+# zmodload zsh/zprof
+
 # ============================================================================
 # ZIM FRAMEWORK CONFIGURATION
 # ============================================================================
@@ -49,11 +52,15 @@ fi
 
 # Install missing modules, and update ${ZIM_HOME}/init.zsh if missing or outdated.
 if [[ ! ${ZIM_HOME}/init.zsh -nt ${ZIM_CONFIG_FILE:-${ZDOTDIR:-${HOME}}/.zimrc} ]]; then
-  source ${ZIM_HOME}/zimfw.zsh init
+  source ${ZIM_HOME}/zimfw.zsh install
 fi
 
-# Load zsh-defer first
-source ${ZIM_HOME}/modules/zsh-defer/zsh-defer.plugin.zsh
+# Load zsh-defer first (guard for fresh installs where modules aren't downloaded yet)
+if [[ -e ${ZIM_HOME}/modules/zsh-defer/zsh-defer.plugin.zsh ]]; then
+  source ${ZIM_HOME}/modules/zsh-defer/zsh-defer.plugin.zsh
+else
+  function zsh-defer() { "$@" }
+fi
 
 # ============================================================================
 # SELECTIVE MODULE LOADING - Load critical modules immediately
@@ -199,3 +206,6 @@ zsh-defer source ~/.fnm-env.zsh
 # ~/.zshrc.local — machine-specific overrides (gitignored, not in this repo)
 [[ -f ~/.secrets ]] && source ~/.secrets
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
+
+# Uncomment to monitor zsh performance. Uncomment the topmost line also to see the results.
+# zprof
