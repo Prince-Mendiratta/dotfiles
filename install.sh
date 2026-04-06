@@ -20,6 +20,14 @@ echo "==> Installing CLI tools..."
 brew install eza fnm stow
 
 # ============================================================================
+# iTerm2
+# ============================================================================
+if [[ ! -d "/Applications/iTerm.app" ]]; then
+  echo "==> Installing iTerm2..."
+  brew install --cask iterm2
+fi
+
+# ============================================================================
 # Stow dotfiles
 # ============================================================================
 echo "==> Symlinking dotfiles with stow..."
@@ -27,8 +35,9 @@ DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$DOTFILES_DIR"
 
 # Remove existing files that would conflict
-[[ -f ~/.zshrc && ! -L ~/.zshrc ]] && mv ~/.zshrc ~/.zshrc.pre-dotfiles
-[[ -f ~/.zimrc && ! -L ~/.zimrc ]] && mv ~/.zimrc ~/.zimrc.pre-dotfiles
+[[ -f ~/.zshrc    && ! -L ~/.zshrc    ]] && mv ~/.zshrc    ~/.zshrc.pre-dotfiles
+[[ -f ~/.zimrc    && ! -L ~/.zimrc    ]] && mv ~/.zimrc    ~/.zimrc.pre-dotfiles
+[[ -f ~/.zprofile && ! -L ~/.zprofile ]] && mv ~/.zprofile ~/.zprofile.pre-dotfiles
 
 stow zsh
 
