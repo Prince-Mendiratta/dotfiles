@@ -158,6 +158,7 @@ alias ..='cd ..'
 # Directory navigation
 alias st='cd ~/Documents/startup'
 alias ct='cd ~/Documents/startup/clients'
+alias ws='cd ~/Documents/startup/ws'
 
 # Git
 alias commit='git commit -s -S -a -m'
@@ -177,10 +178,15 @@ alias yd="yarn start:dev"
 # ============================================================================
 # PATH & ENVIRONMENT
 # ============================================================================
-export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.venv/bin:$HOME/.local/bin:$PATH"
 export PATH="$HOME/.opencode/bin:$PATH"
-export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
-export PATH="$PATH:/Applications/Docker.app/Contents/Resources/bin/"
+export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS="1"
+
+# macOS-specific paths (Homebrew libpq, Docker Desktop)
+if [[ "$OSTYPE" == darwin* ]]; then
+  export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
+  export PATH="$PATH:/Applications/Docker.app/Contents/Resources/bin/"
+fi
 
 # Google Cloud SDK
 if [ -f "$HOME/Downloads/google-cloud-sdk/path.zsh.inc" ]; then
@@ -210,3 +216,4 @@ zsh-defer source ~/.fnm-env.zsh
 
 # Uncomment to monitor zsh performance. Uncomment the topmost line also to see the results.
 # zprof
+
