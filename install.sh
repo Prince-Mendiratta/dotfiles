@@ -81,7 +81,8 @@ install_zimfw() {
     echo "==> Downloading zimfw..."
     curl -fsSL --create-dirs -o "${ZIM_HOME}/zimfw.zsh" \
       https://github.com/zimfw/zimfw/releases/latest/download/zimfw.zsh
-    zsh "${ZIM_HOME}/zimfw.zsh" install
+    # zimfw reads ZIM_HOME from the environment; export it for the subprocess.
+    ZIM_HOME="${ZIM_HOME}" zsh "${ZIM_HOME}/zimfw.zsh" install
   fi
 }
 
