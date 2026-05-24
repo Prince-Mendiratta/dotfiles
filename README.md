@@ -84,6 +84,10 @@ This installs a full remote-dev environment:
 - **Neovim:** latest stable (from the official release), with a
   [kickstart.nvim](https://github.com/nvim-lua/kickstart.nvim)-based config tuned for JS/TS
 - **Claude Code:** installed via the official native installer (`claude.ai/install.sh`), independent of Node
+- **MCP servers** registered at user scope (available in any project):
+  - **Context7** — live, version-correct library docs
+  - **Playwright** — browser automation (Chromium auto-installed)
+- **Agent sandboxing:** `devcontainer` CLI for running risky agent operations in disposable containers (`devcontainer up` + `devcontainer exec claude` per project)
 - **Configs:** `~/.zshrc`, `~/.zimrc`, `~/.tmux.conf`, `~/.config/nvim`, `~/.gitconfig` (stowed)
 - **Git signing:** generates `~/.ssh/id_ed25519`, writes `allowed_signers`, configures SSH commit signing
 
@@ -105,6 +109,18 @@ The script prints next steps when it finishes:
 4. **For mosh**, open UDP `60000-61000` on the server firewall.
 
 On first launch, Neovim will bootstrap its plugins and Mason will install the JS/TS language servers (`ts_ls`, `eslint`) and `prettierd`.
+
+### Claude Code multi-line input
+
+`tmux.conf` ships with the official Anthropic config (`extended-keys`, `allow-passthrough`) so **Shift+Enter** inserts a newline inside tmux instead of submitting. Per-terminal notes ([docs](https://code.claude.com/docs/en/terminal-config)):
+
+| Terminal | Shift+Enter |
+|---|---|
+| iTerm2, WezTerm, Ghostty, Kitty, Warp, Apple Terminal | Works natively, no setup |
+| VS Code / Cursor Remote-SSH | Run `/terminal-setup` once inside Claude Code |
+| **Termius** | Not supported — use `Ctrl+J` or `\` then Enter |
+
+`Ctrl+J` and `\<Enter>` work in **every** terminal as a fallback with no setup.
 
 ---
 

@@ -22,6 +22,9 @@ linux_main() {
   linux_node          # Node LTS via fnm for general JS/TS dev
   linux_neovim
   linux_claude_code
+  linux_devcontainer        # agent sandboxing
+  linux_mcp_servers         # Claude Code MCP: Context7 + Playwright
+  linux_playwright_browsers # Chromium for the Playwright MCP
   linux_git_signing
 
   # Linux stows the full set; macOS only stows zsh (configs differ per-OS).
@@ -91,7 +94,7 @@ linux_apt_base() {
   log "Updating apt and installing base packages + CLI tools..."
   $SUDO apt-get update
   apt_install \
-    zsh git curl wget unzip ca-certificates gnupg build-essential \
+    zsh git curl wget unzip ca-certificates gnupg build-essential sudo \
     stow eza \
     ripgrep fd-find bat fzf jq zoxide git-delta gh mosh tmux
 
@@ -168,6 +171,67 @@ linux_claude_code() {
   # XDG path), independent of Node/fnm. Run before stow so any rc-file
   # edits don't touch the stowed ~/.zshrc symlink.
   curl -fsSL https://claude.ai/install.sh | bash
+}
+
+# --- Claude Code MCP servers (user scope) -------------------------------
+
+# Register an MCP server at user scope (= available in any project) if it
+# isn't already registered.
+_add_mcp_if_missing() {
+  local name="$1"; shift
+  if claude mcp get "$name" >/dev/null 2>&1; then
+    info "MCP server '$name' already registered"
+  else
+    info "Registering MCP server '$name'..."
+    claude mcp add "$name" --scope user -- "$@" \
+      || warn "Failed to register MCP server '$name'"
+  fi
+}
+
+linux_mcp_servers() {
+  log "Configuring Claude Code MCP servers..."
+  if ! has claude; then warn "claude not found; skipping MCP setup"; return; fi
+
+  # npx is needed to launch the stdio MCP servers on demand.
+  eval "$(fnm env --shell bash 2>/dev/null)"
+  fnm use lts-latest >/dev/null 2>&1 || true
+  if ! has npx; then warn "npx not found; skipping MCP setup"; return; fi
+
+  # Context7 — live, version-correct library docs.
+  _add_mcp_if_missing context7 npx -y @upstash/context7-mcp
+
+  # Playwright — browser automation (e2e, screenshots, web scraping).
+  _add_mcp_if_missing playwright npx -y "@playwright/mcp@latest"
+}
+
+linux_playwright_browsers() {
+  eval "$(fnm env --shell bash 2>/dev/null)"
+  fnm use lts-latest >/dev/null 2>&1 || true
+  if ! has npx; then warn "npx not found; skipping Playwright browser install"; return; fi
+
+  # Already installed? Look for any chromium-* directory in the cache.
+  if [[ -d "$HOME/.cache/ms-playwright" ]] \
+     && compgen -G "$HOME/.cache/ms-playwright/chromium*" >/dev/null; then
+    info "Playwright Chromium already installed"
+    return
+  fi
+
+  log "Installing Playwright Chromium (+ system deps)..."
+  # --with-deps invokes 'sudo apt-get' internally to install Chromium's
+  # required system libraries. sudo is ensured by linux_apt_base.
+  npx --yes playwright@latest install --with-deps chromium \
+    || warn "Playwright browser install failed; run 'npx playwright install --with-deps chromium' manually."
+}
+
+# --- Agent sandboxing (devcontainer CLI) --------------------------------
+
+linux_devcontainer() {
+  eval "$(fnm env --shell bash 2>/dev/null)"
+  fnm use lts-latest >/dev/null 2>&1 || true
+  if has devcontainer; then info "devcontainer CLI already installed"; return; fi
+  if ! has npm; then warn "npm not found; skipping devcontainer install"; return; fi
+  log "Installing devcontainer CLI (agent sandboxing)..."
+  npm install -g @devcontainers/cli
 }
 
 # --- neovim (latest stable from official release; apt's is too old) -------
