@@ -207,6 +207,39 @@ zsh-defer source ~/.fnm-env.zsh
 
 
 # ============================================================================
+# TOOL INTEGRATIONS (cross-platform, guarded by availability)
+# ============================================================================
+# Bun
+if [[ -d "$HOME/.bun" ]]; then
+  export BUN_INSTALL="$HOME/.bun"
+  export PATH="$BUN_INSTALL/bin:$PATH"
+  [[ -s "$BUN_INSTALL/_bun" ]] && source "$BUN_INSTALL/_bun"
+fi
+
+# zoxide — smarter cd (provides `z`). Deferred to keep startup fast.
+if (( ${+commands[zoxide]} )); then
+  zsh-defer -c 'eval "$(zoxide init zsh)"'
+fi
+
+# fzf — key bindings (Ctrl-R history, Ctrl-T files, Alt-C cd) + completion.
+# Newer fzf (macOS/brew) ships `fzf --zsh`; Debian/Ubuntu's older fzf uses files.
+if (( ${+commands[fzf]} )); then
+  if fzf --zsh &>/dev/null; then
+    source <(fzf --zsh)
+  else
+    for _f in \
+      /usr/share/doc/fzf/examples/key-bindings.zsh \
+      /usr/share/doc/fzf/examples/completion.zsh \
+      /usr/share/fzf/key-bindings.zsh \
+      /usr/share/fzf/completion.zsh; do
+      [[ -r $_f ]] && source "$_f"
+    done
+    unset _f
+  fi
+fi
+
+
+# ============================================================================
 # SECRETS & LOCAL OVERRIDES
 # ============================================================================
 # ~/.secrets  — API keys and tokens (gitignored, not in this repo)
