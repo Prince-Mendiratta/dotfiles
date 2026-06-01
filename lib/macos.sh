@@ -10,7 +10,7 @@ macos_main() {
   fi
 
   log "Installing CLI tools..."
-  brew install eza fnm stow
+  brew install eza fnm stow mosh fzf
 
   # iTerm2 (macOS only)
   if [[ ! -d "/Applications/iTerm.app" ]]; then
@@ -25,6 +25,15 @@ macos_main() {
   if [[ -f "$DOTFILES_DIR/iterm/com.googlecode.iterm2.plist" ]]; then
     log "Importing iTerm2 preferences..."
     defaults import com.googlecode.iterm2 "$DOTFILES_DIR/iterm/com.googlecode.iterm2.plist"
+  fi
+
+  # iTerm2 dynamic profiles. NOTE: iTerm does not follow symlinks in this dir,
+  # so we copy the file in (re-run install after editing iterm/remote.json).
+  if [[ -f "$DOTFILES_DIR/iterm/remote.json" ]]; then
+    log "Installing iTerm2 dynamic profiles..."
+    local dp_dir="$HOME/Library/Application Support/iTerm2/DynamicProfiles"
+    mkdir -p "$dp_dir"
+    cp "$DOTFILES_DIR/iterm/remote.json" "$dp_dir/remote.json"
   fi
 
   create_secrets
