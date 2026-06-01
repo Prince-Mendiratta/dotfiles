@@ -51,4 +51,4 @@ fi
 printf '\033]0;%s\007' "$host"   # tab/window title
 
 # --- connect: mosh + attach-or-create a persistent tmux session -------------
-exec mosh "$host" -- tmux new-session -A -s main
+exec et "$host" -c "tmux -CC new -A -s main"
