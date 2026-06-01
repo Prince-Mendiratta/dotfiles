@@ -43,10 +43,10 @@ fi
 
 [[ -z "$host" ]] && { print "No host selected."; exit 0; }
 
-# --- tell iTerm which box we're on (badge + tab title), set LOCALLY ----------
-# iTerm badge text is configured as: REMOTE · \(user.remotehost)
+# --- clear any stale iTerm badge; set the tab title to the chosen host -------
+# (the Remote profile no longer renders a badge, so make sure none lingers)
 if [[ "${TERM_PROGRAM:-}" == "iTerm.app" ]]; then
-  printf '\033]1337;SetUserVar=%s=%s\007' remotehost "$(printf %s "$host" | base64)"
+  printf '\e]1337;SetBadgeFormat=\a'
 fi
 printf '\033]0;%s\007' "$host"   # tab/window title
 
