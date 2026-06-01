@@ -269,3 +269,11 @@ _osc7_cwd   # emit once for the starting directory
 
 # Uncomment to monitor zsh performance. Uncomment the topmost line also to see the results.
 # zprof
+
+# Refresh local SSH host inventory from the iCloud-synced source.
+# (We keep a *local* copy because Cursor/VS Code's ssh can't read iCloud Drive — TCC.)
+ssh-hosts-sync() {
+  local src="$HOME/Library/Mobile Documents/com~apple~CloudDocs/dotfiles/ssh-config"
+  cp "$src" "$HOME/.ssh/icloud-hosts" && chmod 644 "$HOME/.ssh/icloud-hosts" \
+    && echo "Synced ~/.ssh/icloud-hosts from iCloud."
+}
