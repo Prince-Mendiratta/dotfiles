@@ -198,12 +198,14 @@ fi
 
 
 # ============================================================================
-# FNM - CACHED & DEFERRED
+# FNM (Fast Node Manager)
 # ============================================================================
-if [[ ! -f ~/.fnm-env.zsh ]] || [[ ~/.zshrc -nt ~/.fnm-env.zsh ]]; then
-  fnm env --use-on-cd >! ~/.fnm-env.zsh 2>/dev/null
+# Do NOT cache `fnm env` output: each run mints a per-process, ephemeral
+# multishell dir under /run/.../fnm_multishells/<pid> that dies with the shell,
+# so a cached snapshot points at a dead PATH in later sessions. Eval it fresh.
+if (( ${+commands[fnm]} )); then
+  eval "$(fnm env --use-on-cd)"
 fi
-zsh-defer source ~/.fnm-env.zsh
 
 
 # ============================================================================
@@ -249,4 +251,3 @@ fi
 
 # Uncomment to monitor zsh performance. Uncomment the topmost line also to see the results.
 # zprof
-
