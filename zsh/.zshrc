@@ -163,6 +163,10 @@ alias st='cd ~/Documents/startup'
 alias ct='cd ~/Documents/startup/clients'
 alias ws='cd ~/Documents/startup/ws'
 
+# New tmux window in the CURRENT dir. Needed under iTerm tmux -CC, where Cmd-T
+# opens in $HOME and the Ctrl-b prefix is disabled by the integration.
+alias nw='tmux neww -c "$PWD"'
+
 # Git
 alias commit='git commit -s -S -a -m'
 alias checkout='git checkout'
@@ -243,6 +247,17 @@ if (( ${+commands[fzf]} )); then
   fi
 fi
 
+
+# ============================================================================
+# TERMINAL CWD REPORTING (OSC 7)
+# ============================================================================
+# Tell the terminal which directory each shell is in. Lets iTerm2 open a new
+# tab/window in the SAME directory — including Cmd-T over a tmux -CC session,
+# where iTerm otherwise can't know the remote cwd. Harmless where unsupported.
+_osc7_cwd() { printf '\e]7;file://%s%s\e\\' "${HOST:-${HOSTNAME:-$(hostname)}}" "$PWD"; }
+autoload -Uz add-zsh-hook
+add-zsh-hook chpwd _osc7_cwd
+_osc7_cwd   # emit once for the starting directory
 
 # ============================================================================
 # SECRETS & LOCAL OVERRIDES
