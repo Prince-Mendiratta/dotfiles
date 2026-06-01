@@ -1,0 +1,56 @@
+{
+  "Profiles": [
+    {
+      "Name": "Remote",
+      "Guid": "A64288E7-1B51-4108-87D8-583E770D7003",
+      "Dynamic Profile Parent Name": "Default",
+
+      "Custom Command": "Yes",
+      "Command": "/bin/zsh -lc \"exec $HOME/dotfiles/bin/remote-connect\"",
+
+      "Badge Text": "REMOTE · \\(user.remotehost)",
+
+      "Use Tab Color": true,
+      "Tab Color": {
+        "Color Space": "sRGB",
+        "Red Component": 0.70,
+        "Green Component": 0.07,
+        "Blue Component": 0.07,
+        "Alpha Component": 1
+      },
+      "Background Color": {
+        "Color Space": "sRGB",
+        "Red Component": 0.13,
+        "Green Component": 0.0,
+        "Blue Component": 0.0,
+        "Alpha Component": 1
+      },
+      "Foreground Color": {
+        "Color Space": "sRGB",
+        "Red Component": 0.85,
+        "Green Component": 0.85,
+        "Blue Component": 0.85,
+        "Alpha Component": 1
+      },
+      "Cursor Color": {
+        "Color Space": "sRGB",
+        "Red Component": 0.90,
+        "Green Component": 0.30,
+        "Blue Component": 0.30,
+        "Alpha Component": 1
+      },
+
+      "Keyboard Map": {
+        "0x31-0x100000": { "Action": 11, "Text": "0x02 0x31" },
+        "0x32-0x100000": { "Action": 11, "Text": "0x02 0x32" },
+        "0x33-0x100000": { "Action": 11, "Text": "0x02 0x33" },
+        "0x34-0x100000": { "Action": 11, "Text": "0x02 0x34" },
+        "0x35-0x100000": { "Action": 11, "Text": "0x02 0x35" },
+        "0x36-0x100000": { "Action": 11, "Text": "0x02 0x36" },
+        "0x37-0x100000": { "Action": 11, "Text": "0x02 0x37" },
+        "0x38-0x100000": { "Action": 11, "Text": "0x02 0x38" },
+        "0x39-0x100000": { "Action": 11, "Text": "0x02 0x39" }
+      }
+    }
+  ]
+}

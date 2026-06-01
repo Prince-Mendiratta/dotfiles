@@ -1,0 +1,54 @@
+#!/usr/bin/env zsh
+# remote-connect — pick a host from your ssh config and open a mosh+tmux session.
+#
+# Used by the single iTerm2 "Remote" dynamic profile so ONE profile serves every
+# machine. The picker runs LOCALLY (before mosh takes over the terminal), so it
+# can set the iTerm badge/title to the chosen host — that's why the one red
+# profile shows e.g. "REMOTE · remote-dev" once connected.
+#
+# Host list is derived from your ssh config, so new hosts appear automatically.
+set -euo pipefail
+
+# --- gather candidate hosts from ssh config + included inventory -------------
+config_files=("$HOME/.ssh/config" "$HOME/.ssh/icloud-hosts")
+hosts=()
+for f in "${config_files[@]}"; do
+  [[ -r "$f" ]] || continue
+  while read -r _ rest; do
+    for h in ${(z)rest}; do
+      # skip wildcard/negated patterns — they aren't real connectable hosts
+      [[ "$h" == *"*"* || "$h" == *"?"* || "$h" == "!"* ]] && continue
+      hosts+=("$h")
+    done
+  done < <(grep -iE '^[[:space:]]*Host[[:space:]]' "$f")
+done
+# de-duplicate, keep order
+typeset -U hosts
+
+if (( ${#hosts} == 0 )); then
+  print -u2 "remote-connect: no hosts found in ssh config"
+  exit 1
+fi
+
+# --- choose a host ----------------------------------------------------------
+host=""
+if [[ -t 0 ]] && command -v fzf >/dev/null 2>&1; then
+  host=$(printf '%s\n' "${hosts[@]}" | fzf --prompt="remote ❯ " --height=40% --reverse --no-multi) || true
+else
+  print "Select a remote host:"
+  select choice in "${hosts[@]}"; do
+    [[ -n "${choice:-}" ]] && host="$choice" && break
+  done
+fi
+
+[[ -z "$host" ]] && { print "No host selected."; exit 0; }
+
+# --- tell iTerm which box we're on (badge + tab title), set LOCALLY ----------
+# iTerm badge text is configured as: REMOTE · \(user.remotehost)
+if [[ "${TERM_PROGRAM:-}" == "iTerm.app" ]]; then
+  printf '\033]1337;SetUserVar=%s=%s\007' remotehost "$(printf %s "$host" | base64)"
+fi
+printf '\033]0;%s\007' "$host"   # tab/window title
+
+# --- connect: mosh + attach-or-create a persistent tmux session -------------
+exec mosh "$host" -- tmux new-session -A -s main

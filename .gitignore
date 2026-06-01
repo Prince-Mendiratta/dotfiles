@@ -1,3 +1,6 @@
 .DS_Store
 .secrets
 .zshrc.local
+
+# timestamped backups created during edits
+*.bak-*

@@ -120,6 +120,9 @@ zstyle ':zim:git-info:keys' format 'prompt' ' on %b%i%I%u%S%A%B%s'
 # ============================================================================
 export LANG='en_US.UTF-8'
 
+# mosh: always show predictive local echo (instant typing over high-latency links)
+export MOSH_PREDICTION_DISPLAY=always
+
 # History
 HISTSIZE=50000
 SAVEHIST=10000
