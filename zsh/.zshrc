@@ -249,6 +249,32 @@ fi
 
 
 # ============================================================================
+# CURSOR REMOTE CLI (remote hosts only)
+# ============================================================================
+# On a box reached via Cursor Remote-SSH, `cursor .` opens the folder in the
+# connected local Cursor window. Two snags this works around: the remote `cursor`
+# CLI isn't on PATH, and our persistent mosh/tmux shells don't inherit Cursor's
+# $VSCODE_IPC_HOOK_CLI. The live IPC socket also isn't reliably the newest by
+# mtime (globbing sockets picks stale ones), so we read the hook straight from a
+# running cursor-server process each call. Guarded on the remote-cli binary
+# existing, so on macOS this is skipped and the real Cursor CLI on PATH is used.
+_cur_cli=(~/.cursor-server/bin/*/*/bin/remote-cli/cursor(N))
+if (( $#_cur_cli )); then
+  cursor() {
+    local cli hook pid
+    cli=( ~/.cursor-server/bin/*/*/bin/remote-cli/cursor(Nom) )
+    (( $#cli )) || { print -u2 "cursor: remote CLI not found (~/.cursor-server)"; return 1; }
+    for pid in ${(f)"$(pgrep -f cursor-server 2>/dev/null)"}; do
+      hook=$(tr '\0' '\n' < /proc/$pid/environ 2>/dev/null | grep -m1 '^VSCODE_IPC_HOOK_CLI=')
+      [[ -n $hook ]] && break
+    done
+    [[ -n $hook ]] || { print -u2 "cursor: no live Cursor Remote-SSH window connected to this host"; return 1; }
+    VSCODE_IPC_HOOK_CLI=${hook#*=} ${cli[1]} "$@"
+  }
+fi
+unset _cur_cli
+
+# ============================================================================
 # TERMINAL CWD REPORTING (OSC 7)
 # ============================================================================
 # Tell the terminal which directory each shell is in. Lets iTerm2 open a new
@@ -277,3 +303,5 @@ ssh-hosts-sync() {
   cp "$src" "$HOME/.ssh/icloud-hosts" && chmod 644 "$HOME/.ssh/icloud-hosts" \
     && echo "Synced ~/.ssh/icloud-hosts from iCloud."
 }
+
+alias gam="/home/prince/bin/gam7/gam"
