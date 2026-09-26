@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# shot-watch — watch the macOS screenshot folder and auto-upload each new
+# screenshot to the remote dev box, copying the REMOTE path to the clipboard.
+#
+# Flow:  ⌘⇧4 (region → file in ~/Screenshots)  →  this watcher uploads it  →
+# ⌘V the remote path into Claude Code on remote-dev.  Runs as a launchd agent
+# (see dotfiles/launchd/com.prince.shot-watch.plist).
+#
+# Derived from claude-screenshot-uploader (https://github.com/mdrzn/claude-screenshot-uploader),
+# with two deliberate fixes, because the upstream watcher does NOT work with
+# real macOS screenshots:
+#   1. Upstream only matched `SCR-[0-9]{8}-[a-z]{4}.png`, a format macOS never
+#      produces (its files look like "Screenshot 2026-06-02 at 3.30.00 AM.png").
+#      We match any new .png/.jpg/.jpeg landing in the watch folder instead.
+#   2. macOS screenshot names contain spaces AND a narrow no-break space (U+202F)
+#      before AM/PM, which makes a pasted path fragile. We upload under a clean,
+#      collision-free name (shot-<timestamp>-<rand>.png) so the path pastes
+#      cleanly into Claude with no quoting headaches.
+#
+# Self-contained (config inlined) to match dotfiles/bin/shot-clip — launchd runs
+# this in a non-interactive shell, so nothing is assumed from ~/.zshrc.
+set -uo pipefail
+
+# --- config -----------------------------------------------------------------
+WATCH_DIR="$HOME/Screenshots"          # where macOS saves screenshots
+REMOTE="prince@remote-dev"             # user@host; matches ~/.ssh/config Host remote-dev
+REMOTE_DIR="/home/prince/shots"        # absolute, so the pasted path is unambiguous
+AUTO_DELETE="false"                    # "true" to remove the local copy after upload
+
+export PATH="/opt/homebrew/bin:$PATH"  # so fswatch/rsync are found under launchd
+
+FSWATCH="/opt/homebrew/bin/fswatch"
+[[ -x "$FSWATCH" ]] || FSWATCH="$(command -v fswatch || true)"
+[[ -x "$FSWATCH" ]] || { echo "fswatch not found — brew install fswatch" >&2; exit 1; }
+
+mkdir -p "$WATCH_DIR"
+
+# Make sure the remote target exists (best effort; non-fatal if unreachable now).
+ssh -o BatchMode=yes -o ConnectTimeout=5 "$REMOTE" "mkdir -p '$REMOTE_DIR'" 2>/dev/null \
+  && echo "✅ remote dir ready: $REMOTE:$REMOTE_DIR" \
+  || echo "⚠️  could not pre-create $REMOTE:$REMOTE_DIR (will retry per-upload)"
+
+echo "🚀 shot-watch started — monitoring $WATCH_DIR → $REMOTE:$REMOTE_DIR"
+
+# A counter gives uniqueness without Date.now-style collisions when two shots
+# land in the same second.
+n=0
+$FSWATCH -0 --event Created --event Updated --event MovedTo "$WATCH_DIR" 2>/dev/null \
+| while read -d "" event; do
+    # only react to image files, and ignore macOS in-progress dotfiles
+    base=$(basename "$event")
+    case "$base" in
+      .*) continue ;;                                  # skip hidden / temp
+    esac
+    case "$base" in
+      *.png|*.PNG|*.jpg|*.JPG|*.jpeg|*.JPEG) : ;;
+      *) continue ;;
+    esac
+    [[ -f "$event" ]] || continue
+
+    # let macOS finish writing the file
+    sleep 0.6
+    [[ -s "$event" ]] || continue
+
+    n=$((n+1))
+    ext="${base##*.}"
+    ts=$(date +%Y%m%d-%H%M%S)
+    remote_name="shot-${ts}-$$${n}.${ext}"
+    remote_path="$REMOTE_DIR/$remote_name"
+
+    echo "📸 $base → $remote_name"
+    if rsync -a -e "ssh -o BatchMode=yes -o ConnectTimeout=8 -o StrictHostKeyChecking=accept-new" \
+         "$event" "$REMOTE:$remote_path" 2>/tmp/shot-watch-rsync.err; then
+        printf '%s' "$remote_path" | pbcopy
+        echo "✅ uploaded; clipboard = $remote_path"
+        osascript -e "display notification \"$remote_name\" with title \"Screenshot uploaded\" subtitle \"Remote path copied — ⌘V into Claude\"" 2>/dev/null || true
+        [[ "$AUTO_DELETE" == "true" ]] && rm -f "$event"
+    else
+        echo "❌ upload failed for $base: $(cat /tmp/shot-watch-rsync.err)"
+        osascript -e "display notification \"$base\" with title \"Screenshot upload FAILED\" subtitle \"check remote-dev connection\"" 2>/dev/null || true
+    fi
+done

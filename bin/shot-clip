@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# shot-clip — upload the screenshot currently on the macOS clipboard to the
+# remote dev box and put the REMOTE file path back on the clipboard.
+#
+# Flow:  ⌘⌃⇧4 (region → clipboard)  →  this script (via Raycast hotkey)  →  ⌘V
+# the path straight into Claude Code running on remote-dev.
+#
+# Thin, self-contained wrapper around clipssh (https://github.com/samuellawrentz/clipssh).
+# Self-contained on purpose: Raycast runs script commands in a NON-interactive
+# shell that does not source ~/.zshrc, so we cannot rely on CLIPSSH_HOST/PATH
+# being exported there. Everything it needs is set right here.
+#
+# Notes on the two settings below:
+#   CLIPSSH_HOST       must contain "user@", otherwise clipssh treats a bare
+#                      name as a *saved alias* and errors. "prince@remote-dev"
+#                      still matches the `Host remote-dev` block in ~/.ssh/config.
+#   CLIPSSH_REMOTE_DIR absolute (not ~/shots): clipssh copies this literal string
+#                      to the clipboard, so an absolute path pastes cleanly into
+#                      Claude on the remote with no ~ expansion ambiguity.
+set -euo pipefail
+
+export CLIPSSH_HOST="prince@remote-dev"
+export CLIPSSH_REMOTE_DIR="/home/prince/shots"
+
+CLIPSSH="${HOME}/.local/bin/clipssh"
+[[ -x "$CLIPSSH" ]] || CLIPSSH="$(command -v clipssh || true)"
+[[ -x "$CLIPSSH" ]] || { echo "clipssh not found (expected at ~/.local/bin/clipssh)" >&2; exit 1; }
+
+exec "$CLIPSSH"
