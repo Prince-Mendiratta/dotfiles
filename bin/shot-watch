@@ -23,8 +23,12 @@ set -uo pipefail
 
 # --- config -----------------------------------------------------------------
 WATCH_DIR="$HOME/Screenshots"          # where macOS saves screenshots
-REMOTE="prince@remote-dev"             # user@host; matches ~/.ssh/config Host remote-dev
-REMOTE_DIR="/home/prince/shots"        # absolute, so the pasted path is unambiguous
+# Override any of these via env (e.g. in the launchd plist). The remote user
+# defaults to the `User` from the matching ~/.ssh/config Host block.
+REMOTE_HOST="${SHOT_REMOTE_HOST:-remote-dev}"
+REMOTE_USER="${SHOT_REMOTE_USER:-$(ssh -G "$REMOTE_HOST" 2>/dev/null | awk '/^user /{print $2; exit}')}"
+REMOTE="${REMOTE_USER}@${REMOTE_HOST}" # user@host
+REMOTE_DIR="${SHOT_REMOTE_DIR:-/home/${REMOTE_USER}/shots}"  # absolute, so the pasted path is unambiguous
 AUTO_DELETE="false"                    # "true" to remove the local copy after upload
 
 export PATH="/opt/homebrew/bin:$PATH"  # so fswatch/rsync are found under launchd

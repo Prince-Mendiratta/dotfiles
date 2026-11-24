@@ -1,0 +1,12 @@
+{
+  "Profiles": [
+    {
+      "Name": "tmux",
+      "Guid": "0FF3FA93-270B-4853-8EAA-F2B77F60788F",
+      "Dynamic Profile Parent Name": "Default",
+
+      "Custom Directory": "No",
+      "Initial Text": "tmux ls && read tmux_session && tmux attach -t ${tmux_session:-default} || tmux new -s ${tmux_session:-default}"
+    }
+  ]
+}
