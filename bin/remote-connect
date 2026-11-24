@@ -1,8 +1,8 @@
 #!/usr/bin/env zsh
-# remote-connect — pick a host from your ssh config and open a mosh+tmux session.
+# remote-connect — pick a host from your ssh config and open a tmux session over et, mosh or ssh.
 #
 # Used by the single iTerm2 "Remote" dynamic profile so ONE profile serves every
-# machine. The picker runs LOCALLY (before mosh takes over the terminal), so it
+# machine. The picker runs LOCALLY (before the connection takes over the terminal), so it
 # can set the iTerm badge/title to the chosen host — that's why the one red
 # profile shows e.g. "REMOTE · remote-dev" once connected.
 #
@@ -50,5 +50,40 @@ if [[ "${TERM_PROGRAM:-}" == "iTerm.app" ]]; then
 fi
 printf '\033]0;%s\007' "$host"   # tab/window title
 
-# --- connect: mosh + attach-or-create a persistent tmux session -------------
-exec et "$host" -c "tmux -CC new -A -s main"
+# --- connect + attach-or-create a persistent tmux session -------------------
+# Transport: REMOTE_TRANSPORT=et|mosh|ssh, else auto: `et` (Eternal Terminal)
+# if installed locally, otherwise plain ssh (works on any host). et needs
+# `etserver` on the remote; mosh needs mosh-server + UDP 60000-61000 open.
+transport="${REMOTE_TRANSPORT:-}"
+if [[ -z "$transport" ]]; then
+  if command -v et >/dev/null 2>&1; then transport=et; else transport=ssh; fi
+fi
+
+# Fall back to a login shell on hosts without tmux.
+remote_cmd='command -v tmux >/dev/null 2>&1 && exec tmux -CC new -A -s main || exec "$SHELL" -l'
+
+# On failure, keep the window open so the error is readable — otherwise iTerm
+# closes the tab instantly and you see nothing.
+fail() {
+  print -u2 "\nremote-connect: $1"
+  read -rs -k1 '?Press any key to close…'
+  exit 1
+}
+
+case "$transport" in
+  et)
+    command -v et >/dev/null 2>&1 || fail "et not installed (brew install MisterTea/et/et), or set REMOTE_TRANSPORT=ssh"
+    et "$host" -c "$remote_cmd" || fail "et to $host failed (is etserver running on it?). Try REMOTE_TRANSPORT=ssh"
+    ;;
+  mosh)
+    # tmux control mode (-CC) doesn't work over mosh; use plain tmux.
+    mosh "$host" -- sh -c 'command -v tmux >/dev/null 2>&1 && exec tmux new -A -s main || exec "$SHELL" -l' \
+      || fail "mosh to $host failed (mosh-server installed? UDP 60000-61000 open?)"
+    ;;
+  ssh)
+    ssh -t "$host" "$remote_cmd" || fail "ssh to $host exited with an error"
+    ;;
+  *)
+    fail "unknown REMOTE_TRANSPORT '$transport' (use et, mosh or ssh)"
+    ;;
+esac
