@@ -304,4 +304,4 @@ ssh-hosts-sync() {
     && echo "Synced ~/.ssh/icloud-hosts from iCloud."
 }
 
-alias gam="/home/prince/bin/gam7/gam"
+[[ -x "$HOME/bin/gam7/gam" ]] && alias gam="$HOME/bin/gam7/gam"

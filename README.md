@@ -28,11 +28,37 @@ chmod +x install.sh
 
 This will:
 - Install [Homebrew](https://brew.sh) if missing
-- Install `eza`, `fnm`, `stow`
-- Symlink `~/.zshrc` and `~/.zimrc` via stow
+- Install `eza`, `fnm`, `stow`, `mosh`, `fzf`
+- Install the [MesloLGS Nerd Font](https://www.nerdfonts.com/) (needed for `eza --icons` and prompt glyphs)
+- Symlink `~/.zshrc`, `~/.zimrc` and `~/.zprofile` via stow (existing files are backed up to `*.pre-dotfiles`)
 - Download and install [zimfw](https://zimfw.sh) and all Zim modules
-- Import iTerm2 preferences
+- Set up iTerm2 **without touching your existing profiles** (see below)
 - Create a `~/.secrets` placeholder for API keys
+
+#### iTerm2
+
+By default the installer is non-destructive:
+
+- Backs up your current prefs to `~/.iterm2-prefs-backup-<timestamp>.plist`
+- Merges a whitelist of global settings from `iterm/com.googlecode.iterm2.plist`
+  (tmux integration, Shift+Enter → newline, global hotkeys, trackpad gestures) —
+  see `lib/iterm_merge_prefs.py`
+- Adds the **tmux** and **Remote** profiles as [Dynamic Profiles](https://iterm2.com/documentation-dynamic-profiles.html)
+  that inherit from *your* `Default` profile
+- Switches your default profile's font to `MesloLGSNF-Regular` (keeping its size).
+  If iTerm2 is running (e.g. you ran the installer from it), this is applied
+  automatically once you quit iTerm2 (⌘Q), since a running iTerm overwrites
+  profile edits.
+
+| Env var | Effect |
+|---|---|
+| `ITERM_KEEP_FONT=1` | Don't change the default profile's font |
+| `ITERM_FULL_IMPORT=1` | Old behavior: replace **all** iTerm2 prefs and profiles with the repo plist (home paths are rewritten to your `$HOME`) |
+| `INSTALL_SHOT_WATCH=1` | Also install the `shot-watch` launchd agent (screenshot → remote-dev uploader) |
+
+`bin/shot-watch` / `bin/shot-clip` default to the `remote-dev` host from your
+`~/.ssh/config` and its `User`; override with `SHOT_REMOTE_HOST`,
+`SHOT_REMOTE_USER`, `SHOT_REMOTE_DIR`.
 
 ### 3. Fill in your secrets
 
@@ -131,7 +157,8 @@ dotfiles/
 ├── install.sh      # entry point: detects OS, dispatches
 ├── lib/
 │   ├── common.sh   # shared helpers + steps (stow, zimfw, secrets)
-│   ├── macos.sh    # macOS install (brew, iTerm2)
+│   ├── macos.sh    # macOS install (brew, fonts, iTerm2)
+│   ├── iterm_merge_prefs.py  # non-destructive iTerm2 prefs merge
 │   └── linux.sh    # Ubuntu install (docker, bun, CLI tools, neovim, ...)
 ├── zsh/
 │   ├── .zshrc      # main shell config (symlinked to ~/.zshrc)
@@ -143,8 +170,12 @@ dotfiles/
 │   └── .config/nvim/init.lua   # Neovim / kickstart config (Linux)
 ├── git/
 │   └── .gitconfig              # git identity + SSH signing + delta (Linux)
-└── iterm/
-    └── com.googlecode.iterm2.plist   # iTerm2 preferences (macOS)
+├── iterm/
+│   ├── com.googlecode.iterm2.plist   # iTerm2 global prefs source (macOS)
+│   ├── tmux.json                     # "tmux" dynamic profile
+│   └── remote.json                   # "Remote" dynamic profile
+├── bin/            # remote-connect, shot-watch, shot-clip
+└── launchd/        # shot-watch agent template (opt-in)
 ```
 
 Stow packages are applied per-OS: macOS stows only `zsh`; Linux stows `zsh git tmux nvim`.

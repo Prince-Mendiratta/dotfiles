@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!-- launchd agent for dotfiles/bin/shot-watch (screenshot → remote-dev:~/shots).
-     Install: cp to ~/Library/LaunchAgents/ then `launchctl load` it.
-     Paths must be ABSOLUTE here — launchd does not expand ~ inside <string>. -->
+     This is a TEMPLATE: launchd does not expand ~ or $HOME, so
+     __HOME__ / __DOTFILES_DIR__ are filled in at install time. Install with:
+       INSTALL_SHOT_WATCH=1 ./install.sh -->
 <plist version="1.0">
 <dict>
     <key>Label</key>
@@ -10,7 +11,7 @@
 
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/princemendiratta/dotfiles/bin/shot-watch</string>
+        <string>__DOTFILES_DIR__/bin/shot-watch</string>
     </array>
 
     <key>RunAtLoad</key>
@@ -26,7 +27,7 @@
     <string>/tmp/shot-watch-error.log</string>
 
     <key>WorkingDirectory</key>
-    <string>/Users/princemendiratta</string>
+    <string>__HOME__</string>
 
     <key>ProcessType</key>
     <string>Background</string>

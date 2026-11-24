@@ -12,15 +12,19 @@
 #
 # Notes on the two settings below:
 #   CLIPSSH_HOST       must contain "user@", otherwise clipssh treats a bare
-#                      name as a *saved alias* and errors. "prince@remote-dev"
+#                      name as a *saved alias* and errors. "<user>@remote-dev"
 #                      still matches the `Host remote-dev` block in ~/.ssh/config.
+#                      The user defaults to that block's `User`.
 #   CLIPSSH_REMOTE_DIR absolute (not ~/shots): clipssh copies this literal string
 #                      to the clipboard, so an absolute path pastes cleanly into
 #                      Claude on the remote with no ~ expansion ambiguity.
 set -euo pipefail
 
-export CLIPSSH_HOST="prince@remote-dev"
-export CLIPSSH_REMOTE_DIR="/home/prince/shots"
+# Override via SHOT_REMOTE_HOST / SHOT_REMOTE_USER / SHOT_REMOTE_DIR.
+REMOTE_HOST="${SHOT_REMOTE_HOST:-remote-dev}"
+REMOTE_USER="${SHOT_REMOTE_USER:-$(ssh -G "$REMOTE_HOST" 2>/dev/null | awk '/^user /{print $2; exit}')}"
+export CLIPSSH_HOST="${REMOTE_USER}@${REMOTE_HOST}"
+export CLIPSSH_REMOTE_DIR="${SHOT_REMOTE_DIR:-/home/${REMOTE_USER}/shots}"
 
 CLIPSSH="${HOME}/.local/bin/clipssh"
 [[ -x "$CLIPSSH" ]] || CLIPSSH="$(command -v clipssh || true)"
